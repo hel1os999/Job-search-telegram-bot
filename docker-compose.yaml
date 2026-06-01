@@ -1,0 +1,42 @@
+services:
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    environment:
+      APP_CONFIG__DB__URL: postgresql+asyncpg://user:password@pg:5432/telegram_db
+      APP_CONFIG__DB__ECHO: 0
+    depends_on:
+      pg:
+        condition: service_healthy
+    restart: unless-stopped
+
+  pg:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: telegram_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d telegram_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      pg:
+        condition: service_healthy
+
+volumes:
+  pgdata:
