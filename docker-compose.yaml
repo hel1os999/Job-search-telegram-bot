@@ -4,6 +4,8 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./
+    env_file:
+      - src/.env
     environment:
       APP_CONFIG__DB__URL: postgresql+asyncpg://user:password@pg:5432/telegram_db
       APP_CONFIG__DB__ECHO: 0

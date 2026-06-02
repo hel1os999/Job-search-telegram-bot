@@ -15,4 +15,10 @@ RUN poetry install --no-root --only main
 
 COPY src/ ./src/
 
-CMD ["python", "-m", "job_search"]
+ENV PYTHONPATH=/app/src
+
+RUN cd src && chmod +x prestart.sh
+
+ENTRYPOINT ["src/prestart.sh"]
+
+CMD ["python", "main.py"]
