@@ -1,7 +1,11 @@
+import logging
+
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from utils.formatting import format_saved_vacancy
+
+logger = logging.getLogger(__name__)
 
 
 async def saved_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -20,6 +24,7 @@ async def saved_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             return
         saved = await container.vacancies(session).list_for_user(db_user.id)
 
+    logger.info("Listing saved vacancies: user_id=%s count=%d", user.id, len(saved))
     if not saved:
         await update.message.reply_text("No saved vacancies yet.")
         return

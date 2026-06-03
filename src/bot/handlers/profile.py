@@ -5,13 +5,13 @@ from services.ai.profile_parser import ProfileParser
 
 import logging
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message:
         return
     context.user_data["awaiting_profile_text"] = True
-    print(context.user_data["awaiting_profile_text"])
+    logger.info("Profile setup started: user_id=%s", update.effective_user.id if update.effective_user else "?")
     await update.message.reply_text(
         "Describe yourself in free text: skills, experience, desired role, salary, location.\n"
         "AI will extract the data and save your profile."
@@ -19,19 +19,16 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 
 async def profile_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    print("HIT profile_text_handler")
     if not update.message or not update.message.text:
         return
     if not context.user_data.pop("awaiting_profile_text", False):
         return
 
-    log.info(f"Message from user:{update.message.text}")
-
     user = update.effective_user
     if not user:
         return
 
-    log.info(f"Telegram user {user}")
+    logger.info("Profile text received: user_id=%s", user.id)
 
     container = context.application.bot_data["container"]
     parser = ProfileParser(container.ai_client)
@@ -50,6 +47,7 @@ async def profile_text_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         )
         await session.commit()
 
+    logger.info("Profile saved: user_id=%s role=%s", user.id, profile.desired_role)
     await update.message.reply_text(
         "Profile saved:\n\n" + profile.to_context()
     )

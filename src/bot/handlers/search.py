@@ -1,3 +1,5 @@
+import logging
+
 from telegram import Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -5,6 +7,8 @@ from schemas.user import UserProfileDTO
 from schemas.vacancy import ScoredVacancy
 from utils.formatting import format_vacancy_card
 from bot.keyboards.inline import vacancy_actions_keyboard
+
+logger = logging.getLogger(__name__)
 
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -29,6 +33,7 @@ async def search_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     if not user:
         return
 
+    logger.info("Search request: user_id=%s query=%r", user.id, query)
     container = context.application.bot_data["container"]
     await update.message.reply_chat_action("typing")
 
@@ -52,10 +57,12 @@ async def search_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     vacancies = await container.job_search.search(query, per_page=5)
 
     if not vacancies:
+        logger.info("No vacancies found: user_id=%s query=%r", user.id, query)
         await update.message.reply_text("Nothing found. Try a different query.")
         return
 
     scored = await container.vacancy_scorer.score_many(profile, vacancies, top_n=5)
+    logger.info("Scored %d vacancies for user_id=%s", len(scored), user.id)
 
     context.user_data["last_vacancies"] = {
         f"{v.source}:{v.external_id}": v.model_dump() for v in scored
@@ -113,6 +120,7 @@ async def save_vacancy_callback(update: Update, context: ContextTypes.DEFAULT_TY
         )
         await session.commit()
 
+    logger.info("Vacancy saved: user_id=%s title=%r source=%s", user.id, vacancy.title, source)
     await query.edit_message_reply_markup(reply_markup=None)
     await query.message.reply_text(f"✅ Saved: {vacancy.title}")
 
