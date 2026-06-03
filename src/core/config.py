@@ -1,18 +1,15 @@
-from pydantic import SecretStr, BaseModel, PostgresDsn
+from pydantic import BaseModel, SecretStr, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
 
 class VacancyURLS(BaseModel):
     remotive: str = "https://remotive.com/api"
-
 
 
 class DatabaseConfig(BaseModel):
     url: PostgresDsn
     echo: bool = False
     echo_pool: bool = False
-    pool_size: int = 50
+    pool_size: int = 5
     max_overflow: int = 10
     naming_convention: dict[str, str] = {
         "ix": "ix_%(column_0_label)s",
@@ -22,6 +19,7 @@ class DatabaseConfig(BaseModel):
         "pk": "pk_%(table_name)s",
     }
 
+
 class BotConfig(BaseModel):
     token: SecretStr
     admin_ids: list[int] = []
@@ -29,8 +27,8 @@ class BotConfig(BaseModel):
 
 class AIConfig(BaseModel):
     api_key: SecretStr | None = None
-    base_url: str = "https://api.openai.com/v1"
-    model: str = "gpt-4o-mini"
+    base_url: str = "https://api.groq.com/openai/v1"
+    model: str = "llama-3.1-8b-instant"
     max_tokens: int = 1024
 
 
@@ -43,6 +41,7 @@ class Settings(BaseSettings):
     )
     db: DatabaseConfig
     bot: BotConfig
+    ai: AIConfig
     vacancy: VacancyURLS = VacancyURLS()
     log_level: str = "INFO"
 
